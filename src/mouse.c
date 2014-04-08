@@ -23,9 +23,14 @@ mouse_init(void)
     set_equipment_flags(0x04, 0x04);
 }
 
-static int
+int VISIBLE32FLAT
 mouse_command(int command, u8 *param)
 {
+    if (! CONFIG_MOUSE)
+        return -1;
+    if (MODESEGMENT)
+        return call32_params(mouse_command, command
+                             , MAKE_FLATPTR(GET_SEG(SS), param), 0, -1);
     if (usb_mouse_active())
         return usb_mouse_command(command, param);
     return ps2_mouse_command(command, param);

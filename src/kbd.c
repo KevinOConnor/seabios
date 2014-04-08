@@ -113,9 +113,14 @@ dequeue_key(struct bregs *regs, int incr, int extended)
     SET_BDA(kbd_buf_head, buffer_head);
 }
 
-static int
+int VISIBLE32FLAT
 kbd_command(int command, u8 *param)
 {
+    if (! CONFIG_KEYBOARD)
+        return -1;
+    if (MODESEGMENT)
+        return call32_params(kbd_command, command
+                             , MAKE_FLATPTR(GET_SEG(SS), param), 0, -1);
     if (usb_kbd_active())
         return usb_kbd_command(command, param);
     return ps2_kbd_command(command, param);
