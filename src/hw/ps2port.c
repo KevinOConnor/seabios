@@ -362,7 +362,7 @@ ps2_mouse_command(int command, u8 *param)
  ****************************************************************/
 
 // INT74h : PS/2 mouse hardware interrupt
-void VISIBLE16
+void VISIBLE32FLAT
 handle_74(void)
 {
     if (! CONFIG_PS2PORT)
@@ -389,7 +389,7 @@ done:
 }
 
 // INT09h : Keyboard Hardware Service Entry Point
-void VISIBLE16
+void VISIBLE32FLAT
 handle_09(void)
 {
     if (! CONFIG_PS2PORT)

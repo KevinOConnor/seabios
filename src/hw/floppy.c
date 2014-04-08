@@ -640,7 +640,7 @@ floppy_process_op(struct disk_op_s *op)
  ****************************************************************/
 
 // INT 0Eh Diskette Hardware ISR Entry Point
-void VISIBLE16
+void VISIBLE32FLAT
 handle_0e(void)
 {
     if (! CONFIG_FLOPPY)

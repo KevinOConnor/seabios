@@ -1115,7 +1115,7 @@ xhci_send_pipe(struct usb_pipe *p, int dir, const void *cmd
     return 0;
 }
 
-int VISIBLE32FLAT
+int
 xhci_poll_intr(struct usb_pipe *p, void *data)
 {
     if (!CONFIG_USB_XHCI)

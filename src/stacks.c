@@ -733,7 +733,7 @@ void
 check_preempt(void)
 {
     if (CONFIG_THREADS && GET_GLOBAL(CanPreempt) && have_threads())
-        call32(yield_preempt, 0, 0);
+        yield_preempt();
 }
 
 

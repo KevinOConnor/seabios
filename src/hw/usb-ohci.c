@@ -534,7 +534,6 @@ ohci_send_pipe(struct usb_pipe *p, int dir, const void *cmd
 int
 ohci_poll_intr(struct usb_pipe *p, void *data)
 {
-    ASSERT16();
     if (! CONFIG_USB_OHCI)
         return -1;
 
@@ -554,7 +553,7 @@ ohci_poll_intr(struct usb_pipe *p, void *data)
     int maxpacket = GET_LOWFLAT(pipe->pipe.maxpacket);
     void *pipedata = GET_LOWFLAT((pipe->data));
     void *intrdata = pipedata + maxpacket * pos;
-    memcpy_far(GET_SEG(SS), data, SEG_LOW, LOWFLAT2LOW(intrdata), maxpacket);
+    memcpy(data, intrdata, maxpacket);
 
     // Reenable this td.
     SET_LOWFLAT(tail->hwINFO, TD_DP_IN | TD_T_TOGGLE | TD_CC);

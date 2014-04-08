@@ -538,7 +538,6 @@ fail:
 int
 uhci_poll_intr(struct usb_pipe *p, void *data)
 {
-    ASSERT16();
     if (! CONFIG_USB_UHCI)
         return -1;
 
@@ -553,8 +552,7 @@ uhci_poll_intr(struct usb_pipe *p, void *data)
 
     // Copy data.
     void *tddata = GET_LOWFLAT(td->buffer);
-    memcpy_far(GET_SEG(SS), data, SEG_LOW, LOWFLAT2LOW(tddata)
-               , uhci_expected_length(token));
+    memcpy(data, tddata, uhci_expected_length(token));
 
     // Reenable this td.
     struct uhci_td *next = (void*)(GET_LOWFLAT(td->link) & ~UHCI_PTR_BITS);

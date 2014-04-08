@@ -294,7 +294,7 @@ static struct scaninfo {
     u16 control;
     u16 alt;
     u8 lock_flags;
-} scan_to_scanascii[] VAR16 = {
+} scan_to_scanascii[] = {
     {   none,   none,   none,   none, none },
     { 0x011b, 0x011b, 0x011b, 0x0100, none }, /* escape */
     { 0x0231, 0x0221,   none, 0x7800, none }, /* 1! */

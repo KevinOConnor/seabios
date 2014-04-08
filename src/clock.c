@@ -278,7 +278,7 @@ handle_1a(struct bregs *regs)
 }
 
 // Update main tick counter
-static void
+void VISIBLE32FLAT
 clock_update(void)
 {
     u32 counter = GET_BDA(timer_counter);
@@ -298,7 +298,7 @@ clock_update(void)
 }
 
 // INT 08h System Timer ISR Entry Point
-void VISIBLE16
+void VISIBLE32FLAT
 handle_08(void)
 {
     debug_isr(DEBUG_ISR_08);
@@ -324,7 +324,7 @@ clock_poll_irq(void)
     if (!timer_check(GET_LOW(last_timer_check)))
         return;
     SET_LOW(last_timer_check, timer_calc(ticks_to_ms(1)));
-    clock_update();
+    call32(clock_update, 0, 0);
 }
 
 
@@ -453,7 +453,7 @@ handle_1583(struct bregs *regs)
 #define USEC_PER_RTC DIV_ROUND_CLOSEST(1000000, 1024)
 
 // int70h: IRQ8 - CMOS RTC
-void VISIBLE16
+void VISIBLE32FLAT
 handle_70(void)
 {
     if (!CONFIG_RTC_TIMER)

@@ -742,7 +742,7 @@ handle_13(struct bregs *regs)
 }
 
 // record completion in BIOS task complete flag
-void VISIBLE16
+void VISIBLE32FLAT
 handle_76(void)
 {
     debug_isr(DEBUG_ISR_76);

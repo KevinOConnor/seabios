@@ -619,7 +619,6 @@ ehci_send_pipe(struct usb_pipe *p, int dir, const void *cmd
 int
 ehci_poll_intr(struct usb_pipe *p, void *data)
 {
-    ASSERT16();
     if (! CONFIG_USB_EHCI)
         return -1;
     struct ehci_pipe *pipe = container_of(p, struct ehci_pipe, pipe);
@@ -634,7 +633,7 @@ ehci_poll_intr(struct usb_pipe *p, void *data)
     int maxpacket = GET_LOWFLAT(pipe->pipe.maxpacket);
     int pos = td - GET_LOWFLAT(pipe->tds);
     void *tddata = GET_LOWFLAT(pipe->data) + maxpacket * pos;
-    memcpy_far(GET_SEG(SS), data, SEG_LOW, LOWFLAT2LOW(tddata), maxpacket);
+    memcpy(data, tddata, maxpacket);
 
     // Reenable this td.
     struct ehci_qtd *next = (void*)(GET_LOWFLAT(td->qtd_next) & ~EHCI_PTR_BITS);

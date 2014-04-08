@@ -69,7 +69,6 @@ usb_send_pipe(struct usb_pipe *pipe_fl, int dir, const void *cmd
 int
 usb_poll_intr(struct usb_pipe *pipe_fl, void *data)
 {
-    ASSERT16();
     switch (GET_LOWFLAT(pipe_fl->type)) {
     default:
     case USB_TYPE_UHCI:
@@ -79,8 +78,7 @@ usb_poll_intr(struct usb_pipe *pipe_fl, void *data)
     case USB_TYPE_EHCI:
         return ehci_poll_intr(pipe_fl, data);
     case USB_TYPE_XHCI: ;
-        return call32_params(xhci_poll_intr, pipe_fl
-                             , MAKE_FLATPTR(GET_SEG(SS), data), 0, -1);
+        return xhci_poll_intr(pipe_fl, data);
     }
 }
 

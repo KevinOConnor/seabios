@@ -436,7 +436,8 @@ irqentry_extrastack:
         movw %ds, %dx           // Setup %ss/%esp and call function
         movw %dx, %ss
         movl %eax, %esp
-        calll *%ecx
+        movl %ecx, %eax         // call32(func, 0, 0)
+        calll __call32
 
         movl %esp, %eax         // Restore registers and return
         movw PUSHBREGS_size+4(%eax), %ss
@@ -487,7 +488,7 @@ irqentry_arg:
         .macro IRQ_ENTRY num
         .global entry_\num
         entry_\num :
-        pushl $ handle_\num
+        pushl $ _cfunc32flat_handle_\num
         jmp irqentry_extrastack
         .endm
 

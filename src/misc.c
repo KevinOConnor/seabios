@@ -60,7 +60,7 @@ handle_10(struct bregs *regs)
 }
 
 // NMI handler
-void VISIBLE16
+void VISIBLE32FLAT
 handle_02(void)
 {
     debug_isr(DEBUG_ISR_02);
@@ -76,7 +76,7 @@ mathcp_setup(void)
 }
 
 // INT 75 - IRQ13 - MATH COPROCESSOR EXCEPTION
-void VISIBLE16
+void VISIBLE32FLAT
 handle_75(void)
 {
     debug_isr(DEBUG_ISR_75);
