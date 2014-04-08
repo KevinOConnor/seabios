@@ -22,7 +22,7 @@
 #include "hw/virtio-scsi.h" // virtio_scsi_process_op
 #include "malloc.h" // malloc_low
 #include "output.h" // dprintf
-#include "stacks.h" // stack_hop
+#include "stacks.h" // call32
 #include "std/disk.h" // struct dpte_s
 #include "string.h" // checksum
 #include "util.h" // process_floppy_op
@@ -504,38 +504,27 @@ default_process_op(struct disk_op_s *op)
     }
 }
 
-// Command dispatch for disk drivers that run in both 16bit and 32bit mode
+// Command dispatch for disk drivers that only run in 32bit mode
 static int
-process_op_both(struct disk_op_s *op)
+process_op_32(struct disk_op_s *op)
 {
-    switch (GET_GLOBALFLAT(op->drive_gf->type)) {
+    switch (op->drive_gf->type) {
+    case DTYPE_FLOPPY:
+        return floppy_process_op(op);
+    case DTYPE_ATA:
+        return ata_process_op(op);
     case DTYPE_ATA_ATAPI:
         return ata_atapi_process_op(op);
-    case DTYPE_USB:
-        return usb_process_op(op);
-    case DTYPE_UAS:
-        return uas_process_op(op);
+    case DTYPE_RAMDISK:
+        return ramdisk_process_op(op);
+    case DTYPE_CDEMU:
+        return cdemu_process_op(op);
     case DTYPE_LSI_SCSI:
         return lsi_scsi_process_op(op);
     case DTYPE_ESP_SCSI:
         return esp_scsi_process_op(op);
     case DTYPE_MEGASAS:
         return megasas_process_op(op);
-    default:
-        if (!MODESEGMENT)
-            return DISK_RET_EPARAM;
-        // In 16bit mode and driver not found - try in 32bit mode
-        return call32(process_op_32, MAKE_FLATPTR(GET_SEG(SS), op)
-                      , DISK_RET_EPARAM);
-    }
-}
-
-// Command dispatch for disk drivers that only run in 32bit mode
-int VISIBLE32FLAT
-process_op_32(struct disk_op_s *op)
-{
-    ASSERT32FLAT();
-    switch (op->drive_gf->type) {
     case DTYPE_VIRTIO_BLK:
         return virtio_blk_process_op(op);
     case DTYPE_AHCI:
@@ -544,8 +533,10 @@ process_op_32(struct disk_op_s *op)
         return ahci_atapi_process_op(op);
     case DTYPE_SDCARD:
         return sdcard_process_op(op);
+    case DTYPE_USB:
     case DTYPE_USB_32:
         return usb_process_op(op);
+    case DTYPE_UAS:
     case DTYPE_UAS_32:
         return uas_process_op(op);
     case DTYPE_VIRTIO_SCSI:
@@ -553,70 +544,32 @@ process_op_32(struct disk_op_s *op)
     case DTYPE_PVSCSI:
         return pvscsi_process_op(op);
     default:
-        return process_op_both(op);
-    }
-}
-
-// Command dispatch for disk drivers that only run in 16bit mode
-static int
-process_op_16(struct disk_op_s *op)
-{
-    ASSERT16();
-    switch (GET_GLOBALFLAT(op->drive_gf->type)) {
-    case DTYPE_FLOPPY:
-        return floppy_process_op(op);
-    case DTYPE_ATA:
-        return ata_process_op(op);
-    case DTYPE_RAMDISK:
-        return ramdisk_process_op(op);
-    case DTYPE_CDEMU:
-        return cdemu_process_op(op);
-    default:
-        return process_op_both(op);
+        return DISK_RET_EPARAM;
     }
 }
 
 // Execute a disk_op_s request.
-int
+int VISIBLE32FLAT
 process_op(struct disk_op_s *op)
 {
-    int ret, origcount = op->count;
+    ASSERT32FLAT();
+    if (! CONFIG_DRIVES)
+        return -1;
+    dprintf(DEBUG_HDL_13, "process_op d=%p lba=%lld buf=%p count=%d cmd=%d\n"
+            , op->drive_gf, op->lba, op->buf_fl, op->count, op->command);
+    int origcount = op->count;
     if (origcount * GET_GLOBALFLAT(op->drive_gf->blksize) > 64*1024) {
         op->count = 0;
         return DISK_RET_EBOUNDARY;
     }
-    if (MODESEGMENT)
-        ret = process_op_16(op);
-    else
-        ret = process_op_32(op);
+    int ret = process_op_32(op);
     if (ret && op->count == origcount)
         // If the count hasn't changed on error, assume no data transferred.
         op->count = 0;
     return ret;
 }
 
-// Execute a "disk_op_s" request - this runs on the extra stack.
-static int
-__send_disk_op(struct disk_op_s *op_far, u16 op_seg)
-{
-    struct disk_op_s dop;
-    memcpy_far(GET_SEG(SS), &dop
-               , op_seg, op_far
-               , sizeof(dop));
-
-    dprintf(DEBUG_HDL_13, "disk_op d=%p lba=%d buf=%p count=%d cmd=%d\n"
-            , dop.drive_gf, (u32)dop.lba, dop.buf_fl
-            , dop.count, dop.command);
-
-    int status = process_op(&dop);
-
-    // Update count with total sectors transferred.
-    SET_FARVAR(op_seg, op_far->count, dop.count);
-
-    return status;
-}
-
-// Execute a "disk_op_s" request by jumping to the extra 16bit stack.
+// Execute a "disk_op_s" request by jumping into 32bit mode.
 int
 send_disk_op(struct disk_op_s *op)
 {
@@ -624,5 +577,5 @@ send_disk_op(struct disk_op_s *op)
     if (! CONFIG_DRIVES)
         return -1;
 
-    return stack_hop(__send_disk_op, op, GET_SEG(SS));
+    return call32(process_op, MAKE_FLATPTR(GET_SEG(SS), op), DISK_RET_EPARAM);
 }
