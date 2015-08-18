@@ -409,6 +409,8 @@ sdcard_card_setup(struct sddrive_s *drive, int volt, int prio)
     ret = sdcard_pio(regs, SC_ALL_SEND_CID, param);
     if (ret)
         return ret;
+    u8 cid[16];
+    memcpy(cid, param, sizeof(cid));
     param[0] = isMMC ? 0x0001 << 16 : 0x00;
     ret = sdcard_pio(regs, SC_SEND_RELATIVE_ADDR, param);
     if (ret)
@@ -425,8 +427,15 @@ sdcard_card_setup(struct sddrive_s *drive, int volt, int prio)
     // Register drive
     drive->drive.blksize = DISK_SECTOR_SIZE;
     drive->drive.sectors = (u64)-1; // XXX
-    dprintf(1, "Found SD Card at %p\n", regs);
-    char *desc = znprintf(MAXDESCSIZE, "SD Card"); // XXX
+    char pnm[7] = {};
+    int i;
+    for (i=0; i < (isMMC ? 6 : 5); i++)
+        pnm[i] = cid[11-i];
+    u8 prv = cid[11-i];
+    char *desc = znprintf(MAXDESCSIZE, "%s %s v%d.%d"
+                          , isMMC ? "MMC drive" : "SD card"
+                          , pnm, prv>>4, prv & 0x0f);
+    dprintf(1, "Found sdcard at %p: %s\n", regs, desc);
     boot_add_hd(&drive->drive, desc, prio);
     return 0;
 }
