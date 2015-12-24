@@ -11,11 +11,48 @@
 #include "x86.h" // outb
 
 
+static struct {
+    u32 base_addr;
+    u8 reg_width;
+    u8 is_io_mapped;
+} serial = {
+    .is_io_mapped = 1,
+    .base_addr = CONFIG_DEBUG_SERIAL_PORT,
+    .reg_width = 1,
+};
+
 /****************************************************************
  * Serial port debug output
  ****************************************************************/
 
 #define DEBUG_TIMEOUT 100000
+
+static inline u8 serial_read(u8 reg)
+{
+    u32 reg_base = serial.base_addr + reg * serial.reg_width;
+
+    if (serial.is_io_mapped)
+        return inb(reg_base);
+    else
+        return readb((void *)reg_base);
+}
+
+static inline void serial_write(u8 reg, u8 val)
+{
+    u32 reg_base = serial.base_addr + reg * serial.reg_width;
+
+    if (serial.is_io_mapped)
+        outb(reg_base, val);
+    else
+        writeb((void *)reg_base, val);
+}
+
+void serial_update_params(u32 base_addr, u8 reg_width, u8 is_io_mapped)
+{
+    serial.base_addr = base_addr;
+    serial.reg_width = reg_width;
+    serial.is_io_mapped = is_io_mapped;
+}
 
 // Setup the debug serial port for output.
 void
@@ -25,12 +62,12 @@ serial_debug_preinit(void)
         return;
     // setup for serial logging: 8N1
     u8 oldparam, newparam = 0x03;
-    oldparam = inb(CONFIG_DEBUG_SERIAL_PORT+SEROFF_LCR);
-    outb(newparam, CONFIG_DEBUG_SERIAL_PORT+SEROFF_LCR);
+    oldparam = serial_read(SEROFF_LCR);
+    serial_write(SEROFF_LCR, newparam);
     // Disable irqs
     u8 oldier, newier = 0;
-    oldier = inb(CONFIG_DEBUG_SERIAL_PORT+SEROFF_IER);
-    outb(newier, CONFIG_DEBUG_SERIAL_PORT+SEROFF_IER);
+    oldier = serial_read(SEROFF_IER);
+    serial_write(SEROFF_IER, newier);
 
     if (oldparam != newparam || oldier != newier)
         dprintf(1, "Changing serial settings was %x/%x now %x/%x\n"
@@ -44,11 +81,11 @@ serial_debug(char c)
     if (!CONFIG_DEBUG_SERIAL)
         return;
     int timeout = DEBUG_TIMEOUT;
-    while ((inb(CONFIG_DEBUG_SERIAL_PORT+SEROFF_LSR) & 0x20) != 0x20)
+    while ((serial_read(SEROFF_LSR) & 0x20) != 0x20)
         if (!timeout--)
             // Ran out of time.
             return;
-    outb(c, CONFIG_DEBUG_SERIAL_PORT+SEROFF_DATA);
+    serial_write(SEROFF_DATA, c);
 }
 
 void
@@ -66,7 +103,7 @@ serial_debug_flush(void)
     if (!CONFIG_DEBUG_SERIAL)
         return;
     int timeout = DEBUG_TIMEOUT;
-    while ((inb(CONFIG_DEBUG_SERIAL_PORT+SEROFF_LSR) & 0x60) != 0x60)
+    while ((serial_read(SEROFF_LSR) & 0x60) != 0x60)
         if (!timeout--)
             // Ran out of time.
             return;
