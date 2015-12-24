@@ -69,6 +69,20 @@ struct cb_forward {
     u64 forward;
 };
 
+#define CB_TAG_SERIAL 0x0f
+
+#define CB_SERIAL_TYPE_IO_MAPPED     1
+#define CB_SERIAL_TYPE_MEMORY_MAPPED 2
+
+struct cb_serial {
+	u32 tag;
+	u32 size;
+	u32 type;
+	u32 baseaddr;
+	u32 baud;
+	u32 regwidth;
+} PACKED;
+
 #define CB_TAG_FORWARD 0x11
 
 struct cb_cbmem_ref {
@@ -190,6 +204,13 @@ coreboot_preinit(void)
     // Ughh - coreboot likes to set a map at 0x0000-0x1000, but this
     // confuses grub.  So, override it.
     e820_add(0, 16*1024, E820_RAM);
+
+    struct cb_serial *cbser = find_cb_subtable(cbh, CB_TAG_SERIAL);
+    if (cbser) {
+        serial_update_params(cbser->baseaddr, cbser->regwidth,
+			     (cbser->type == CB_SERIAL_TYPE_IO_MAPPED));
+        dprintf(1, "Found coreboot serial console @ %x\n", cbser->baseaddr);
+    }
 
     struct cb_cbmem_ref *cbref = find_cb_subtable(cbh, CB_TAG_CBMEM_CONSOLE);
     if (cbref) {

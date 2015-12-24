@@ -20,6 +20,7 @@
 #define SEROFF_LSR     5
 #define SEROFF_MSR     6
 
+void serial_update_params(u32 base_addr, u8 reg_width, u8 is_io_mapped);
 void serial_debug_preinit(void);
 void serial_debug_putc(char c);
 void serial_debug_flush(void);
