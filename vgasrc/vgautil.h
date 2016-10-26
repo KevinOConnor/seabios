@@ -34,6 +34,29 @@ struct bregs;
 void clext_1012(struct bregs *regs);
 int clext_setup(void);
 
+// sercon.c
+void sercon_write_pixel(u8 color, u16 x, u16 y);
+u8 sercon_read_pixel(u16 x, u16 y);
+struct cursorpos;
+struct carattr;
+void sercon_scroll(struct cursorpos win, struct cursorpos winsize
+                   , int lines, struct carattr ca);
+void sercon_write_char(struct cursorpos cp, struct carattr ca);
+struct carattr sercon_read_char(struct cursorpos cp);
+struct vgamode_s *sercon_find_mode(int mode);
+void sercon_list_modes(u16 seg, u16 *dest, u16 *last);
+int sercon_get_window(struct vgamode_s *vmode_g, int window);
+int sercon_set_window(struct vgamode_s *vmode_g, int window, int val);
+int sercon_get_linelength(struct vgamode_s *vmode_g);
+int sercon_set_linelength(struct vgamode_s *vmode_g, int val);
+int sercon_get_displaystart(struct vgamode_s *vmode_g);
+int sercon_set_displaystart(struct vgamode_s *vmode_g, int val);
+int sercon_get_dacformat(struct vgamode_s *vmode_g);
+int sercon_set_dacformat(struct vgamode_s *vmode_g, int val);
+int sercon_save_restore(int cmd, u16 seg, void *data);
+int sercon_set_mode(struct vgamode_s *vmode_g, int flags);
+int sercon_setup(void);
+
 // stdvgaio.c
 u8 stdvga_pelmask_read(void);
 void stdvga_pelmask_write(u8 val);

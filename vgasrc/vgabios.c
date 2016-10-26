@@ -14,7 +14,6 @@
 #include "stdvga.h" // stdvga_set_cursor_shape
 #include "string.h" // memset_far
 #include "vgabios.h" // calc_page_size
-#include "vgafb.h" // vgafb_write_char
 #include "vgahw.h" // vgahw_set_mode
 #include "vgautil.h" // swcursor_pre_handle10
 
@@ -158,7 +157,7 @@ set_scan_lines(u8 lines)
 static void
 write_char(struct cursorpos *pcp, struct carattr ca)
 {
-    vgafb_write_char(*pcp, ca);
+    vgahw_write_char(*pcp, ca);
     pcp->x++;
     // Do we need to wrap ?
     if (pcp->x == GET_BDA(video_cols)) {
@@ -199,7 +198,7 @@ write_teletype(struct cursorpos *pcp, struct carattr ca)
         struct cursorpos win = {0, 0, pcp->page};
         struct cursorpos winsize = {GET_BDA(video_cols), nbrows+1};
         struct carattr attr = {' ', 0, 0};
-        vgafb_scroll(win, winsize, 1, attr);
+        vgahw_scroll(win, winsize, 1, attr);
     }
 }
 
@@ -411,7 +410,7 @@ verify_scroll(struct bregs *regs, int dir)
     struct cursorpos win = {ulx, uly, GET_BDA(video_page)};
     struct cursorpos winsize = {wincols, winrows};
     struct carattr attr = {' ', regs->bh, 1};
-    vgafb_scroll(win, winsize, lines, attr);
+    vgahw_scroll(win, winsize, lines, attr);
 }
 
 static void
@@ -429,7 +428,7 @@ handle_1007(struct bregs *regs)
 static void
 handle_1008(struct bregs *regs)
 {
-    struct carattr ca = vgafb_read_char(get_cursor_pos(regs->bh));
+    struct carattr ca = vgahw_read_char(get_cursor_pos(regs->bh));
     regs->al = ca.car;
     regs->ah = ca.attr;
 }
@@ -492,14 +491,14 @@ static void
 handle_100c(struct bregs *regs)
 {
     // XXX - page (regs->bh) is unused
-    vgafb_write_pixel(regs->al, regs->cx, regs->dx);
+    vgahw_write_pixel(regs->al, regs->cx, regs->dx);
 }
 
 static void
 handle_100d(struct bregs *regs)
 {
     // XXX - page (regs->bh) is unused
-    regs->al = vgafb_read_pixel(regs->cx, regs->dx);
+    regs->al = vgahw_read_pixel(regs->cx, regs->dx);
 }
 
 static void noinline

@@ -55,6 +55,12 @@ menu "VGA ROM"
                 Build support for a vgabios wrapper around video
                 devices initialized using coreboot native vga init.
 
+        config VGA_SERCON
+            bool "VGA emulation over serial port"
+            help
+                Build support for a vga option rom that forwards text
+                updates over a serial port.
+
     endchoice
 
     choice
