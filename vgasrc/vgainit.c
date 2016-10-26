@@ -93,12 +93,13 @@ void VISIBLE16
 handle_timer_hook(void)
 {
     swcursor_check_event();
+    sercon_check_event();
 }
 
 static void
 hook_timer_irq(void)
 {
-    if (!CONFIG_VGA_EMULATE_TEXT)
+    if (!CONFIG_VGA_EMULATE_TEXT && !CONFIG_VGA_SERCON)
         return;
     extern void entry_timer_hook(void);
     extern void entry_timer_hook_extrastack(void);

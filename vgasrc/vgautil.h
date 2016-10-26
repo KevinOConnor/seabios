@@ -35,6 +35,7 @@ void clext_1012(struct bregs *regs);
 int clext_setup(void);
 
 // sercon.c
+void sercon_check_event(void);
 void sercon_write_pixel(u8 color, u16 x, u16 y);
 u8 sercon_read_pixel(u16 x, u16 y);
 struct cursorpos;

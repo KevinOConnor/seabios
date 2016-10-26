@@ -99,6 +99,53 @@ sercon_clear_screen(void)
 
 
 /****************************************************************
+ * Serial port input
+ ****************************************************************/
+
+static u8
+enqueue_key(u16 keycode)
+{
+    u16 buffer_start = GET_BDA(kbd_buf_start_offset);
+    u16 buffer_end   = GET_BDA(kbd_buf_end_offset);
+
+    u16 buffer_head = GET_BDA(kbd_buf_head);
+    u16 buffer_tail = GET_BDA(kbd_buf_tail);
+
+    u16 temp_tail = buffer_tail;
+    buffer_tail += 2;
+    if (buffer_tail >= buffer_end)
+        buffer_tail = buffer_start;
+
+    if (buffer_tail == buffer_head)
+        return 0;
+
+    SET_FARVAR(SEG_BDA, *(u16*)(temp_tail+0), keycode);
+    SET_BDA(kbd_buf_tail, buffer_tail);
+    return 1;
+}
+
+void
+sercon_check_event(void)
+{
+    if (!CONFIG_VGA_SERCON)
+        return;
+
+    // XXX - move cursor if current position doesn't match last sent location
+
+    if (!(inb(SERCON_PORT + SEROFF_LSR) & 0x01))
+        // No input data
+        return;
+
+    u8 in = inb(SERCON_PORT + SEROFF_DATA);
+
+    // XXX - check for multi-byte input sequence
+
+    u16 keycode = in; // XXX - lookup real keycode
+    enqueue_key(keycode);
+}
+
+
+/****************************************************************
  * Interface functions
  ****************************************************************/
 
