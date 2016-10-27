@@ -7,6 +7,7 @@
 #include <stdarg.h> // va_list
 
 #include "biosvar.h" // GET_GLOBAL
+#include "bregs.h" // struct bregs
 #include "output.h" // dprintf
 #include "vgabios.h" // struct vgamode_s
 #include "vgafb.h" // struct cursorpos
@@ -142,6 +143,61 @@ sercon_check_event(void)
 
     u16 keycode = in; // XXX - lookup real keycode
     enqueue_key(keycode);
+}
+
+
+/****************************************************************
+ * Hooked 0x10 handling
+ ****************************************************************/
+
+struct segoff_s sercon_entry_hook_resume VAR16 VISIBLE16;
+
+static void
+sercon_1000(struct bregs *regs)
+{
+    if (!(regs->al & 0x80))
+        sercon_clear_screen();
+}
+
+static void
+sercon_100e(struct bregs *regs)
+{
+    // Just like handle_100e, but don't update the cursor position
+    struct carattr ca = {regs->al, regs->bl, 0};
+    struct cursorpos cp = get_cursor_pos(GET_BDA(video_page));
+    write_teletype(&cp, ca);
+}
+
+static void
+sercon_1013(struct bregs *regs)
+{
+    // Use the main handle_10 routine, but don't update the cursor position
+    u8 oldal = regs->al;
+    regs->al &= ~0x01;
+    handle_10(regs);
+    regs->al = oldal;
+}
+
+void VISIBLE16
+sercon_10(struct bregs *regs)
+{
+    if (!CONFIG_VGA_SERCON)
+        return;
+
+    switch (regs->ah) {
+    case 0x00: sercon_1000(regs); break;
+    case 0x0e: sercon_100e(regs); break;
+    case 0x13: sercon_1013(regs); break;
+
+    case 0x06:
+    case 0x07:
+    case 0x09:
+    case 0x0a:
+        handle_10(regs);
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -287,5 +343,14 @@ sercon_setup(void)
 {
     outb(0x03, SERCON_PORT + SEROFF_LCR); // 8N1
     outb(0x01, SERCON_PORT + 0x02);       // enable fifo
+
+    struct segoff_s cur_entry = GET_IVT(0x10);
+    if (cur_entry.seg != SEG_BIOS) {
+        // Looks like a VGA BIOS has already been installed - hook it.
+        SET_VGA(sercon_entry_hook_resume, cur_entry);
+        extern void entry_sercon_10(void);
+        SET_IVT(0x10, SEGOFF(get_global_seg(), (u32)entry_sercon_10));
+    }
+
     return 0;
 }

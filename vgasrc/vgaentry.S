@@ -159,3 +159,10 @@ entry_timer_hook_extrastack:
         movl PUSHBREGS_size(%eax), %esp
         RESTOREBREGS_DSEAX
         ljmpw *%cs:Timer_Hook_Resume
+
+        // Serial console irq hooking
+        DECLFUNC entry_sercon_10
+entry_sercon_10:
+        ENTRY_ARG sercon_10
+        ljmpw *%cs:sercon_entry_hook_resume
+        // XXX - support extra stack on sercon entry?

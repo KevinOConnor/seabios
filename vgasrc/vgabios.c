@@ -168,7 +168,7 @@ write_char(struct cursorpos *pcp, struct carattr ca)
 
 // Write a character to the screen at a given position.  Implement
 // special characters and scroll the screen if necessary.
-static void
+void
 write_teletype(struct cursorpos *pcp, struct carattr ca)
 {
     switch (ca.car) {

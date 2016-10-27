@@ -155,6 +155,7 @@ vga_post(struct bregs *regs)
             SET_VGA(VgaBDF, bdf);
     }
 
+    struct segoff_s orig_entry = GET_IVT(0x10);
     int ret = vgahw_setup();
     if (ret) {
         dprintf(1, "Failed to initialize VGA hardware.  Exiting.\n");
@@ -169,10 +170,12 @@ vga_post(struct bregs *regs)
     if (CONFIG_VGA_STDVGA_PORTS)
         stdvga_build_video_param();
 
-    extern void entry_10(void);
-    SET_IVT(0x10, SEGOFF(get_global_seg(), (u32)entry_10));
+    if (orig_entry.segoff == GET_IVT(0x10).segoff) {
+        extern void entry_10(void);
+        SET_IVT(0x10, SEGOFF(get_global_seg(), (u32)entry_10));
 
-    allocate_extra_stack();
+        allocate_extra_stack();
+    }
 
     hook_timer_irq();
 

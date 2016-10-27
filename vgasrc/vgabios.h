@@ -84,5 +84,10 @@ int bda_save_restore(int cmd, u16 seg, void *data);
 struct vgamode_s *get_current_mode(void);
 int vga_set_mode(int mode, int flags);
 extern struct video_func_static static_functionality;
+struct cursorpos;
+struct carattr;
+void write_teletype(struct cursorpos *pcp, struct carattr ca);
+struct bregs;
+void handle_10(struct bregs *regs);
 
 #endif // vgabios.h
