@@ -271,7 +271,7 @@ define do-kconfig
 $(Q)mkdir -p $(OUT)/scripts/kconfig/lxdialog
 $(Q)mkdir -p $(OUT)/include/config
 $(Q)mkdir -p $(addprefix $(OUT), $(DIRS))
-$(Q)$(MAKE) -C $(OUT) -f $(CURDIR)/scripts/kconfig/Makefile srctree=$(CURDIR) src=scripts/kconfig obj=scripts/kconfig Q=$(Q) Kconfig=$(CURDIR)/src/Kconfig $1
+$(Q)+$(MAKE) -C $(OUT) -f $(CURDIR)/scripts/kconfig/Makefile srctree=$(CURDIR) src=scripts/kconfig obj=scripts/kconfig Q=$(Q) Kconfig=$(CURDIR)/src/Kconfig $1
 endef
 
 $(OUT)autoconf.h : $(KCONFIG_CONFIG) ; $(call do-kconfig, silentoldconfig)
