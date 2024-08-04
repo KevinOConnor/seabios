@@ -161,16 +161,22 @@ static inline void insl_fl(u16 port, void *ptr_fl, u16 count) {
     insl(port, (u32*)FLATPTR_TO_OFFSET(ptr_fl), count);
 }
 static inline void outsb_fl(u16 port, void *ptr_fl, u16 count) {
-    SET_SEG(ES, FLATPTR_TO_SEG(ptr_fl));
+    u16 ds = GET_SEG(DS);
+    SET_SEG(DS, FLATPTR_TO_SEG(ptr_fl));
     outsb(port, (u8*)FLATPTR_TO_OFFSET(ptr_fl), count);
+    SET_SEG(DS, ds);
 }
 static inline void outsw_fl(u16 port, void *ptr_fl, u16 count) {
-    SET_SEG(ES, FLATPTR_TO_SEG(ptr_fl));
+    u16 ds = GET_SEG(DS);
+    SET_SEG(DS, FLATPTR_TO_SEG(ptr_fl));
     outsw(port, (u16*)FLATPTR_TO_OFFSET(ptr_fl), count);
+    SET_SEG(DS, ds);
 }
 static inline void outsl_fl(u16 port, void *ptr_fl, u16 count) {
-    SET_SEG(ES, FLATPTR_TO_SEG(ptr_fl));
+    u16 ds = GET_DS(DS);
+    SET_SEG(DS, FLATPTR_TO_SEG(ptr_fl));
     outsl(port, (u32*)FLATPTR_TO_OFFSET(ptr_fl), count);
+    SET_SEG(DS, ds);
 }
 
 #else
