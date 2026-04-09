@@ -396,7 +396,7 @@ stdvga_set_displaystart(struct vgamode_s *curmode_g, int val)
 int
 stdvga_get_dacformat(struct vgamode_s *curmode_g)
 {
-    return -1;
+    return 6;
 }
 
 // Set 8bit per rgb (24bit total) or 6bit per rgb (18bit total)
@@ -404,6 +404,8 @@ int
 stdvga_set_dacformat(struct vgamode_s *curmode_g, int val)
 {
     // Stdvga only supports 6bits for each color channel
+    if (val >= 6)
+        return 0;
     return -1;
 }
 
