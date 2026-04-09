@@ -176,10 +176,10 @@ bochsvga_set_dacformat(struct vgamode_s *curmode_g, int val)
     if (!bochsvga_dispi_enabled())
         return stdvga_set_dacformat(curmode_g, val);
     u16 en = dispi_read(VBE_DISPI_INDEX_ENABLE);
-    if (val == 6)
-        en &= ~VBE_DISPI_8BIT_DAC;
-    else if (val == 8)
+    if (val >= 8)
         en |= VBE_DISPI_8BIT_DAC;
+    else if (val >= 6)
+        en &= ~VBE_DISPI_8BIT_DAC;
     else
         return -1;
     dispi_write(VBE_DISPI_INDEX_ENABLE, en);
