@@ -3,7 +3,7 @@ bios that is built with standard GNU tools.
 
 Please see build and developer information at:
 
-  http://seabios.org/Developer_Documentation
+  https://seabios.org/Developer_Documentation.html
 
 For the impatient, SeaBIOS is built for QEMU and tested on QEMU with:
 
